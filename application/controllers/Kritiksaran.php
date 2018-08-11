@@ -21,7 +21,7 @@ class Kritiksaran extends REST_Controller {
         $alamatFoto = site_url().'uploads/kritiksaran/img/';
 
         if ($id == '') {
-            $data = $this->kritiksaran_model->get_all();
+            $data = $this->kritiksaran_model->get_all(); 
 
             foreach ($data as $row) { 
                 // mendeklarasikan data apa aja yang akan ditampilkan
