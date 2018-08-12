@@ -5,7 +5,7 @@ use Restserver\Libraries\REST_Controller;
 require APPPATH . 'libraries/REST_Controller.php';
 require APPPATH . 'libraries/Format.php';
 
-class Kritiksaran extends REST_Controller {
+class Pelaporan extends REST_Controller {
  
     function __construct($config = 'rest') {
         parent::__construct($config);
