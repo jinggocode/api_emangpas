@@ -10,35 +10,56 @@ class Kritiksaran extends REST_Controller {
     function __construct($config = 'rest') {
         parent::__construct($config);
 
-        $this->load->model('kritiksaran_model');
         $this->load->helper('filename');
         $this->load->helper('url');
+        $this->load->model('kritiksaran_model');
     }
  
     // show data kritiksaran
-    function index_get() {
-        $id = $this->get('id'); 
-        $alamatFoto = site_url().'uploads/kritiksaran/img/';
+    function index_get() { 
+        $page = $_GET['page']; 
 
-        if ($id == '') {
-            $data = $this->kritiksaran_model->get_all(); 
+        $alamatFoto = site_url().'uploads/kritiksaran/img/';   
+        $start = 0;  
+        $limit = 5; 
 
-            $no = 1;
-            foreach ($data as $row) { 
-                // mendeklarasikan data apa aja yang akan ditampilkan
-                $value[] = array(
-                    'no' => $no++,
-                    'id_krisan' => $row->id, 
-                    'nama_pasar' => $row->nama_pasar, 
-                    'nama_konsumen' => $row->nama_konsumen, 
-                    'isi_krisan' => $row->isi_krisan, 
-                    'foto_krisan' => $alamatFoto.$row->foto_krisan, 
-                    'waktu_krisan' => $row->waktu_krisan, 
-                );
-            }
+        $total = $this->kritiksaran_model  
+            ->count_rows();  
+        $page_limit = ceil($total/$limit);  
+
+        if($page<=$page_limit){ 
+            $start = ($page - 1) * $limit; 
+
+            $data = $this->kritiksaran_model 
+                ->limit($limit, $start)
+                ->order_by('id', 'DESC')
+                ->get_all();
+            
+            if ($data != FALSE) {
+                $no = 1;
+                foreach ($data as $row) {  
+                    // mendeklarasikan data apa aja yang akan ditampilkan
+                    $value[] = array(
+                        'no' => $no++,
+                        'id_krisan' => $row->id, 
+                        'nama_pasar' => $row->nama_pasar, 
+                        'nama_konsumen' => $row->nama_konsumen, 
+                        'isi_krisan' => $row->isi_krisan, 
+                        'foto_krisan' => $alamatFoto.$row->foto_krisan, 
+                        'waktu_krisan' => $row->waktu_krisan, 
+                    );
+                }
+            } 
         } else {
-            $data = $this->kritiksaran_model->get($id); 
-        }
+            $value[] = array( 
+                'id_krisan' => "NULL", 
+                'nama_pasar' => "", 
+                'nama_konsumen' => "", 
+                'isi_krisan' => "", 
+                'foto_krisan' => "", 
+                'waktu_krisan' => "", 
+            ); 
+        }  
         $this->response($value, 200);
     }
  
@@ -62,10 +83,7 @@ class Kritiksaran extends REST_Controller {
     }
  
     // insert new data to kritiksaran
-    function index_post() {
-        $nama_pasar 	= $_POST['nama_pasar']; 
-        $nama_konsumen 	= $_POST['nama_konsumen']; 
-        $isi_krisan 	= $_POST['isi_krisan']; 
+    function index_post() { 
         $foto_krisan 	= $_POST['foto_krisan'];  
         
 		$foto_name   = fileName(1, 'PRD','',8).'.png';
@@ -80,8 +98,7 @@ class Kritiksaran extends REST_Controller {
         );
 
         $insert = $this->kritiksaran_model->insert($data);
-        if ($insert) { 
-            // $this->response($insert, 200);
+        if ($insert) {  
             $this->response("Sukses Tambah Data", 200);
         } else {
             $this->response(array('status' => 'fail', 502));

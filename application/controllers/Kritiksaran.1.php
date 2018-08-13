@@ -5,42 +5,72 @@ use Restserver\Libraries\REST_Controller;
 require APPPATH . 'libraries/REST_Controller.php';
 require APPPATH . 'libraries/Format.php';
 
-class Pelaporan extends REST_Controller {
+class Kritiksaran extends REST_Controller {
  
     function __construct($config = 'rest') {
         parent::__construct($config);
 
+        $this->load->model('kritiksaran_model');
         $this->load->helper('filename');
         $this->load->helper('url');
-        $this->load->model('kritiksaran_model');
     }
  
     // show data kritiksaran
-    function index_get() { 
-        $page = $_GET['page']; 
+    function index_get() {
+        $id = $this->get('id'); 
+        $alamatFoto = site_url().'uploads/kritiksaran/img/';
 
-        $alamatFoto = site_url().'uploads/kritiksaran/img/';   
-        $start = 0;  
-        $limit = 5; 
-
-        $total = $this->kritiksaran_model  
-            ->count_rows();  
-        $page_limit = ceil($total/$limit);  
-
-        if($page<=$page_limit){ 
-            $start = ($page - 1) * $limit; 
-
+        if ($id == '') {
+            $offset = isset($_GET['offset']) && $_GET['offset'] != '' ? $this->get('offset') : 0;
+             
+            // var_dump($offset);
+    
             $data = $this->kritiksaran_model 
-                ->limit($limit, $start)
+                ->limit(2, $offset)
                 ->order_by('id', 'DESC')
-                ->get_all();
+                ->get_all(); 
             
+            $jumlah_data = $this->kritiksaran_model 
+                ->limit(2, $offset)
+                ->order_by('id', 'DESC')
+                ->count_rows(); 
+
+                $json_kosong = 0;
+
+                // var_dump($data); die();
+
+                $num = '';
+            if($jumlah_data < 2){  
+                if($jumlah_data==0){
+                    $json_kosong = 1;
+                }else{
+                    $data = $this->kritiksaran_model 
+                        ->limit($jumlah_data, $offset)
+                        ->order_by('id', 'DESC')
+                        ->get_all(); 
+                    $jumlah_data = $this->kritiksaran_model 
+                        ->limit($jumlah_data, $offset)
+                        ->order_by('id', 'DESC')
+                        ->get_all();  
+                    if(empty($jumlah_data)){ 
+                        $data = $this->kritiksaran_model 
+                            ->limit(0, 2)
+                            ->order_by('id', 'DESC')
+                            ->get_all(); 
+                        $num = 0;
+                    }else{
+                        $num = $offset;
+                    } 
+                }
+            } else {
+                $num = $offset;
+            }   
+            // var_dump($jumlah_data);
             if ($data != FALSE) {
-                $no = 1;
                 foreach ($data as $row) {  
                     // mendeklarasikan data apa aja yang akan ditampilkan
                     $value[] = array(
-                        'no' => $no++,
+                        'no' => $num++,
                         'id_krisan' => $row->id, 
                         'nama_pasar' => $row->nama_pasar, 
                         'nama_konsumen' => $row->nama_konsumen, 
@@ -49,17 +79,24 @@ class Pelaporan extends REST_Controller {
                         'waktu_krisan' => $row->waktu_krisan, 
                     );
                 }
-            } 
+            }
+            
+            if($json_kosong==1){
+                $value = array(
+                    'no' => "",
+                    'id_krisan' => "", 
+                    'nama_pasar' => "", 
+                    'nama_konsumen' => "", 
+                    'isi_krisan' => "", 
+                    'foto_krisan' => "", 
+                    'waktu_krisan' => "", 
+                ); 
+            }else{ 
+
+            }
         } else {
-            $value[] = array( 
-                'id_krisan' => "NULL", 
-                'nama_pasar' => "", 
-                'nama_konsumen' => "", 
-                'isi_krisan' => "", 
-                'foto_krisan' => "", 
-                'waktu_krisan' => "", 
-            ); 
-        }  
+            $data = $this->kritiksaran_model->get($id); 
+        }
         $this->response($value, 200);
     }
  
@@ -98,7 +135,8 @@ class Pelaporan extends REST_Controller {
         );
 
         $insert = $this->kritiksaran_model->insert($data);
-        if ($insert) {  
+        if ($insert) { 
+            // $this->response($insert, 200);
             $this->response("Sukses Tambah Data", 200);
         } else {
             $this->response(array('status' => 'fail', 502));
